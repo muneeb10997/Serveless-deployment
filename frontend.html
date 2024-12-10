@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+        }
+        #todo-form, #todo-list {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"], textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>My To-Do App</h1>
+
+<div id="todo-form">
+    <h2>Add Todo</h2>
+    <input type="text" id="title" placeholder="Title" required>
+    <textarea id="description" placeholder="Description" rows="3"></textarea>
+    <button onclick="addTodo()">Add Todo</button>
+</div>
+
+<div id="todo-list">
+    <h2>My Todos</h2>
+    <button onclick="fetchTodos()">See All Todos</button>
+    <table id="todos-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="todos-body">
+            <!-- Todos will be populated here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const backendUrl = 'http://Todo-App-flask-ALB-dev-783464389.us-east-1.elb.amazonaws.com/todos';  // Backend server URL through ALB
+
+    async function addTodo() {
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+
+        // Step 1: Fetch the current maximum ID from the backend
+        const maxResponse = await fetch(`${backendUrl}/max-id`); // Ensure this endpoint is available in your backend
+        const maxIdData = await maxResponse.json();
+        const maxId = maxIdData.maxId || 0; // Default to 0 if no todos exist
+
+        // Step 2: Prepare the new ID
+        const newId = maxId + 1;
+
+        // Step 3: Send the new todo with the new ID to the backend
+        const response = await fetch(backendUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: newId, title, description }),
+        });
+
+        if (response.ok) {
+            document.getElementById('title').value = '';
+            document.getElementById('description').value = '';
+            fetchTodos();  // Refresh the todo list
+        } else {
+            const error = await response.json();
+            alert(error.error);
+        }
+    }
+
+    async function fetchTodos() {
+        const response = await fetch(backendUrl);
+        const todos = await response.json();
+        const todosBody = document.getElementById('todos-body');
+        todosBody.innerHTML = '';  // Clear existing todos
+
+        todos.forEach(todo => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${todo.id}</td>
+                <td>${todo.title}</td>
+                <td>${todo.description}</td>
+                <td class="actions">
+                    <button onclick="updateTodo(${todo.id}, '${todo.title}', '${todo.description}')">Update</button>
+                    <button onclick="deleteTodo(${todo.id})">Delete</button>
+                </td>
+            `;
+            todosBody.appendChild(row);
+        });
+    }
+
+    async function updateTodo(id, currentTitle, currentDescription) {
+        const newTitle = prompt("Enter new title:", currentTitle);
+        const newDescription = prompt("Enter new description:", currentDescription);
+
+        if (newTitle) {
+            await fetch(`${backendUrl}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: newTitle, description: newDescription }),
+            });
+            fetchTodos();  // Refresh the todo list
+        }
+    }
+
+    async function deleteTodo(id) {
+        await fetch(`${backendUrl}/${id}`, {
+            method: 'DELETE',
+        });
+        fetchTodos();  // Refresh the todo list
+    }
+</script>
+
+</body>
+</html>
