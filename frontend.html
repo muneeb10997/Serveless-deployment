@@ -91,39 +91,9 @@
 </div>
 
 <script>
-    const backendUrl = 'http://Todo-App-flask-ALB-dev-783464389.us-east-1.elb.amazonaws.com/todos';  // Backend server URL through ALB
+    const backendUrl = 'https://x3jqq6xde9.execute-api.us-east-1.amazonaws.com/prod/items';  // Update with actual API URL
 
-    async function addTodo() {
-        const title = document.getElementById('title').value;
-        const description = document.getElementById('description').value;
-
-        // Step 1: Fetch the current maximum ID from the backend
-        const maxResponse = await fetch(`${backendUrl}/max-id`); // Ensure this endpoint is available in your backend
-        const maxIdData = await maxResponse.json();
-        const maxId = maxIdData.maxId || 0; // Default to 0 if no todos exist
-
-        // Step 2: Prepare the new ID
-        const newId = maxId + 1;
-
-        // Step 3: Send the new todo with the new ID to the backend
-        const response = await fetch(backendUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id: newId, title, description }),
-        });
-
-        if (response.ok) {
-            document.getElementById('title').value = '';
-            document.getElementById('description').value = '';
-            fetchTodos();  // Refresh the todo list
-        } else {
-            const error = await response.json();
-            alert(error.error);
-        }
-    }
-
+    // Function to fetch all todos
     async function fetchTodos() {
         const response = await fetch(backendUrl);
         const todos = await response.json();
@@ -145,11 +115,36 @@
         });
     }
 
+    // Function to add a new todo
+    async function addTodo() {
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+
+        // Step 1: Send the new todo to the backend
+        const response = await fetch(backendUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title, description }),
+        });
+
+        if (response.ok) {
+            document.getElementById('title').value = '';
+            document.getElementById('description').value = '';
+            fetchTodos();  // Refresh the todo list
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Error adding todo');
+        }
+    }
+
+    // Function to update an existing todo
     async function updateTodo(id, currentTitle, currentDescription) {
         const newTitle = prompt("Enter new title:", currentTitle);
         const newDescription = prompt("Enter new description:", currentDescription);
 
-        if (newTitle) {
+        if (newTitle && newDescription) {
             await fetch(`${backendUrl}/${id}`, {
                 method: 'PUT',
                 headers: {
@@ -161,6 +156,7 @@
         }
     }
 
+    // Function to delete a todo
     async function deleteTodo(id) {
         await fetch(`${backendUrl}/${id}`, {
             method: 'DELETE',
