@@ -5,114 +5,73 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('todos')
 
 def get_next_id():
-    # Scan the table to get all items
     response = table.scan()
     items = response.get('Items', [])
     
     if not items:
-        return 1  # Start with ID 1 if the table is empty
-    
-    # Find the maximum ID from the existing items and convert it to an integer
-    max_id = max(int(item['id']) for item in items)  # Convert ID to integer to find the maximum value
-    
-    # Return the next ID (max_id + 1)
+        return 1 
+
+    max_id = max(int(item['id']) for item in items) 
     return max_id + 1
 
 def lambda_handler(event, context):
-    http_method = event['httpMethod']
-    path = event['path']
-    body = event.get('body')
-    response = {}
+    http_method = event["httpMethod"]
+    path = event.get('path', '')
 
-    headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-    }
-
-    try:
-        if http_method == 'POST' and path == '/items':
-            # Generate a new ID for the item
-            item_id = get_next_id()
-            
-            # Create Item with auto-generated ID (ensure ID is a string here)
-            data = json.loads(body)
-            data['id'] = str(item_id)  # Convert the ID to a string before storing in DynamoDB
-            
-            # Insert the item into DynamoDB
-            table.put_item(Item=data)
-            
-            response = {
-                'statusCode': 200,
-                'body': json.dumps({'message': 'Item created successfully!', 'id': str(item_id)})  # Ensure id is a string
-            }
-
-        elif http_method == 'GET' and path == '/items':
-            # Get all items
-            db_response = table.scan()
-            items = db_response.get('Items', [])
-            response = {
-                'statusCode': 200,
-                'body': json.dumps(items)
-            }
-
-        elif http_method == 'GET' and path.startswith('/items/'):
-            # Get Item by ID
-            item_id = path.split('/')[-1]
-            db_response = table.get_item(Key={'id': item_id})  # Keep ID as a string here
-            item = db_response.get('Item', {})
-            response = {
-                'statusCode': 200 if item else 404,
-                'body': json.dumps(item if item else {'message': 'Item not found'})
-            }
-
-        elif http_method == 'PUT' and path.startswith('/items/'):
-            # Update Item by ID
-            item_id = path.split('/')[-1]
-            data = json.loads(body)
-            update_expression = "SET " + ", ".join(f"{k} = :{k}" for k in data.keys())
-            expression_values = {f":{k}": v for k, v in data.items()}
-            table.update_item(
-                Key={'id': item_id},  # ID is a string here
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_values
-            )
-            response = {
-                'statusCode': 200,
-                'body': json.dumps({'message': 'Item updated successfully!'})
-            }
-
-        elif http_method == 'DELETE' and path == '/items':
-            # Delete all items
-            db_response = table.scan()
-            for item in db_response.get('Items', []):
-                table.delete_item(Key={'id': item['id']})
-            response = {
-                'statusCode': 200,
-                'body': json.dumps({'message': 'All items deleted successfully!'})
-            }
-
-        elif http_method == 'DELETE' and path.startswith('/items/'):
-            # Delete Item by ID
-            item_id = path.split('/')[-1]
-            table.delete_item(Key={'id': item_id})  # ID is a string here
-            response = {
-                'statusCode': 200,
-                'body': json.dumps({'message': 'Item deleted successfully!'})
-            }
-
-        else:
-            # Unsupported operation
-            response = {
-                'statusCode': 400,
-                'body': json.dumps({'message': 'Invalid operation'})
-            }
-
-    except Exception as e:
+    # fetch all items
+    if http_method == "GET" and path == '/items':
+        count=table.scan()
+        items = count.get('Items',[])
         response = {
-            'statusCode': 500,
-            'body': json.dumps({'message': 'Internal server error', 'error': str(e)})
+            "statusCode": 200,
+            "body": json.dumps(items)
         }
+        return response
+    
+    # create new item
+    elif http_method == "POST" and path == '/items':
+        item_id = get_next_id()
+        data = json.loads(event['body']) 
+        data['id'] = str(item_id)
+        table.put_item(Item=data)
 
-    response['headers'] = headers
-    return response
+        response = {
+           "statusCode": 200,
+           "body": json.dumps({"message": "Item added or posted"})
+        }
+        return response
+
+    # delete all items
+    elif http_method == "DELETE" and path == '/items':
+        count=table.scan()
+        items = count.get('Items',[])
+        for item in items:
+            table.delete_item(Key={'id': item['id']})
+        response = {
+           "statusCode": 200,
+           "body": json.dumps({"message": "all items deleted"})
+        }
+        return response
+    
+    # update item by id 
+    elif http_method == "PUT" and path.startswith('/items/'):
+        item_id = path.split('/')[-1]
+        data = json.loads(event['body']) 
+        data['id'] = str(item_id)
+        table.put_item(Item=data)
+
+        response = {
+           "statusCode": 200,
+           "body": json.dumps({"message": "Item updated or posted"})
+        }
+        return response
+    
+    # delete item by id 
+    elif http_method == "DELETE" and path.startswith('/items/'):
+        item_id = path.split('/')[-1]
+        table.delete_item(Key={'id':item_id})
+        response = {
+           "statusCode": 200,
+           "body": json.dumps({"message": "Item deleted"})
+        }
+        return response
