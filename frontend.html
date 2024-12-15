@@ -97,10 +97,8 @@
     async function fetchTodos() {
     const response = await fetch(backendUrl);
     const todos = await response.json();
-    console.log(todos);  // Check what data is returned
     const todosBody = document.getElementById('todos-body');
-    todosBody.innerHTML = '';  // Clear existing todos
-
+    
     todos.forEach(todo => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -116,13 +114,11 @@
     });
 }
 
-
     // Function to add a new todo
     async function addTodo() {
         const title = document.getElementById('title').value;
         const description = document.getElementById('description').value;
 
-        // Step 1: Send the new todo to the backend
         const response = await fetch(backendUrl, {
             method: 'POST',
             headers: {
@@ -134,7 +130,7 @@
         if (response.ok) {
             document.getElementById('title').value = '';
             document.getElementById('description').value = '';
-            fetchTodos();  // Refresh the todo list
+            fetchTodos();  
         } else {
             const error = await response.json();
             alert(error.message || 'Error adding todo');
@@ -154,7 +150,7 @@
                 },
                 body: JSON.stringify({ title: newTitle, description: newDescription }),
             });
-            fetchTodos();  // Refresh the todo list
+            fetchTodos();  
         }
     }
 
@@ -163,7 +159,7 @@
         await fetch(`${backendUrl}/${id}`, {
             method: 'DELETE',
         });
-        fetchTodos();  // Refresh the todo list
+        fetchTodos();  
     }
 </script>
 
