@@ -97,9 +97,9 @@
     async function fetchTodos() {
     const response = await fetch(backendUrl);
     const todos = await response.json();
-    console.log(todos);  // Check what data is returned
     const todosBody = document.getElementById('todos-body');
-    todosBody.innerHTML = '';  
+    
+    todosBody.innerHTML = '';
 
     todos.forEach(todo => {
         const row = document.createElement('tr');
