@@ -95,25 +95,35 @@
 
     // Function to fetch all todos
     async function fetchTodos() {
+    try {
         const response = await fetch(backendUrl);
+
+        if (!response.ok) {
+            throw new Error(`Error fetching todos: ${response.statusText}`);
+        }
+
         const todos = await response.json();
         const todosBody = document.getElementById('todos-body');
-        todosBody.innerHTML = '';  // Clear existing todos
+        todosBody.innerHTML = ''; // Clear existing todos
 
-        todos.forEach(todo => {
+        (todos.items || todos).forEach(todo => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${todo.id}</td>
-                <td>${todo.title}</td>
-                <td>${todo.description}</td>
+                <td>${todo.title.replace(/"/g, '&quot;')}</td>
+                <td>${todo.description.replace(/"/g, '&quot;')}</td>
                 <td class="actions">
-                    <button onclick="updateTodo(${todo.id}, '${todo.title}', '${todo.description}')">Update</button>
-                    <button onclick="deleteTodo(${todo.id})">Delete</button>
+                    <button onclick="updateTodo('${todo.id}', '${todo.title.replace(/'/g, "\\'")}', '${todo.description.replace(/'/g, "\\'")}')">Update</button>
+                    <button onclick="deleteTodo('${todo.id}')">Delete</button>
                 </td>
             `;
             todosBody.appendChild(row);
         });
+    } catch (error) {
+        console.error(error);
+        alert('Failed to load todos.');
     }
+}
 
     // Function to add a new todo
     async function addTodo() {
