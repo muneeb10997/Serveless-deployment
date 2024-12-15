@@ -97,8 +97,10 @@
     async function fetchTodos() {
     const response = await fetch(backendUrl);
     const todos = await response.json();
+    console.log(todos);  // Check what data is returned
     const todosBody = document.getElementById('todos-body');
-    
+    todosBody.innerHTML = '';  
+
     todos.forEach(todo => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -113,6 +115,7 @@
         todosBody.appendChild(row);
     });
 }
+
 
     // Function to add a new todo
     async function addTodo() {
