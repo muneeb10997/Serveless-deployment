@@ -95,34 +95,26 @@
 
     // Function to fetch all todos
     async function fetchTodos() {
-    try {
-        const response = await fetch(backendUrl);
+    const response = await fetch("https://x3jqq6xde9.execute-api.us-east-1.amazonaws.com/prod/items");
+    const todos = await response.json();
+    
+    console.log(todos);  // Check if data is coming in the expected format
+    const todosBody = document.getElementById('todos-body');
+    todosBody.innerHTML = '';  // Clear existing todos
 
-        if (!response.ok) {
-            throw new Error(`Error fetching todos: ${response.statusText}`);
-        }
-
-        const todos = await response.json();
-        const todosBody = document.getElementById('todos-body');
-        todosBody.innerHTML = ''; // Clear existing todos
-
-        (todos.items || todos).forEach(todo => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${todo.id}</td>
-                <td>${todo.title.replace(/"/g, '&quot;')}</td>
-                <td>${todo.description.replace(/"/g, '&quot;')}</td>
-                <td class="actions">
-                    <button onclick="updateTodo('${todo.id}', '${todo.title.replace(/'/g, "\\'")}', '${todo.description.replace(/'/g, "\\'")}')">Update</button>
-                    <button onclick="deleteTodo('${todo.id}')">Delete</button>
-                </td>
-            `;
-            todosBody.appendChild(row);
-        });
-    } catch (error) {
-        console.error(error);
-        alert('Failed to load todos.');
-    }
+    todos.forEach(todo => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${todo.id}</td>
+            <td>${todo.title}</td>
+            <td>${todo.description}</td>
+            <td class="actions">
+                <button onclick="updateTodo(${todo.id}, '${todo.title}', '${todo.description}')">Update</button>
+                <button onclick="deleteTodo(${todo.id})">Delete</button>
+            </td>
+        `;
+        todosBody.appendChild(row);
+    });
 }
 
     // Function to add a new todo
