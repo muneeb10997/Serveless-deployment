@@ -95,25 +95,27 @@
 
     // Function to fetch all todos
     async function fetchTodos() {
-        const response = await fetch(backendUrl);
-        const todos = await response.json();
-        const todosBody = document.getElementById('todos-body');
-        todosBody.innerHTML = '';  // Clear existing todos
+    const response = await fetch(backendUrl);
+    const todos = await response.json();
+    console.log(todos);  // Check what data is returned
+    const todosBody = document.getElementById('todos-body');
+    todosBody.innerHTML = '';  // Clear existing todos
 
-        todos.forEach(todo => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${todo.id}</td>
-                <td>${todo.title}</td>
-                <td>${todo.description}</td>
-                <td class="actions">
-                    <button onclick="updateTodo(${todo.id}, '${todo.title}', '${todo.description}')">Update</button>
-                    <button onclick="deleteTodo(${todo.id})">Delete</button>
-                </td>
-            `;
-            todosBody.appendChild(row);
-        });
-    }
+    todos.forEach(todo => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${todo.id}</td>
+            <td>${todo.title}</td>
+            <td>${todo.description}</td>
+            <td class="actions">
+                <button onclick="updateTodo(${todo.id}, '${todo.title}', '${todo.description}')">Update</button>
+                <button onclick="deleteTodo(${todo.id})">Delete</button>
+            </td>
+        `;
+        todosBody.appendChild(row);
+    });
+}
+
 
     // Function to add a new todo
     async function addTodo() {
