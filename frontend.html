@@ -127,7 +127,17 @@
     async function addTodo() {
         const title = document.getElementById('title').value;
         const description = document.getElementById('description').value;
+        const errorMessage = document.getElementById('error-message');
 
+        // Clear any previous error message
+        errorMessage.textContent = '';
+
+        // Validate title field
+        if (!title) {
+            errorMessage.textContent = 'The title field is required!';
+            return;  // Exit the function if validation fails
+        }
+        
         try {
             const response = await fetch(backendUrl, {
                 method: 'POST',
