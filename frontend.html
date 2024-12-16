@@ -97,7 +97,7 @@
 </div>
 
 <script>
-    const backendUrl = 'https://x3jqq6xde9.execute-api.us-east-1.amazonaws.com/prod/items';  // Update with actual API URL
+    const backendUrl = 'https://x3jqq6xde9.execute-api.us-east-1.amazonaws.com/prod/items';  
 
     // Function to fetch all todos
     async function fetchTodos() {
@@ -135,14 +135,11 @@
         const title = document.getElementById('title').value;
         const description = document.getElementById('description').value;
         const errorMessage = document.getElementById('error-message');
-
-        // Clear any previous error message
+        
         errorMessage.textContent = '';
-
-        // Validate title field
         if (!title) {
             errorMessage.textContent = 'The title field is required!';
-            return;  // Exit the function if validation fails
+            return; 
         }
 
         try {
@@ -171,7 +168,14 @@
     async function updateTodo(id, currentTitle, currentDescription) {
         const newTitle = prompt("Enter new title:", currentTitle);
         const newDescription = prompt("Enter new description:", currentDescription);
-
+        const errorMessage = document.getElementById('error-message');
+        
+        errorMessage.textContent = '';
+        if (!title) {
+            errorMessage.textContent = 'The title field is required!';
+            return;  
+        }
+        
         if (newTitle && newDescription) {
             try {
                 await fetch(`${backendUrl}/${id}`, {
@@ -181,7 +185,7 @@
                     },
                     body: JSON.stringify({ title: newTitle, description: newDescription }),
                 });
-                fetchTodos();  // Refresh the list of todos after updating
+                fetchTodos();  
             } catch (error) {
                 console.error('Error updating todo:', error);
             }
@@ -194,7 +198,7 @@
             await fetch(`${backendUrl}/${id}`, {
                 method: 'DELETE',
             });
-            fetchTodos();  // Refresh the list of todos after deleting
+            fetchTodos();  
         } catch (error) {
             console.error('Error deleting todo:', error);
         }
