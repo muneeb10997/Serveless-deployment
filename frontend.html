@@ -64,6 +64,11 @@
             font-size: 14px;
             margin-top: 10px;
         }
+        .error-cell {
+            color: red;
+            text-align: center;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -75,7 +80,7 @@
     <input type="text" id="title" placeholder="Title" required>
     <textarea id="description" placeholder="Description" rows="3"></textarea>
     <button onclick="addTodo()">Add Todo</button>
-    <p id="error-message" class="error"></p>  <!-- Error message element -->
+    <p id="error-message" class="error"></p>  <!-- Error message element for Add Todo -->
 </div>
 
 <div id="todo-list">
@@ -85,7 +90,7 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Title</th><p id="error-message" class="error"></p> 
+                <th>Title</th>
                 <th>Description</th>
                 <th>Actions</th>
             </tr>
@@ -117,7 +122,6 @@
                         <td>${todo.title}</td>
                         <td>${todo.description}</td>
                         <td class="actions">
-                            <!-- Passing the id as a string -->
                             <button onclick="updateTodo('${todo.id}', '${todo.title}', '${todo.description}')">Update</button>
                             <button onclick="deleteTodo('${todo.id}')">Delete</button>
                         </td>
@@ -136,9 +140,10 @@
         const description = document.getElementById('description').value;
         const errorMessage = document.getElementById('error-message');
         
-        errorMessage.textContent = '';
+        errorMessage.textContent = '';  // Reset error message
+
         if (!title) {
-            errorMessage.textContent = 'The title field is required!';
+            errorMessage.textContent = 'The title field is required to add a todo!';
             return; 
         }
 
@@ -168,12 +173,23 @@
     async function updateTodo(id, currentTitle, currentDescription) {
         const newTitle = prompt("Enter new title:", currentTitle);
         const newDescription = prompt("Enter new description:", currentDescription);
-        const errorMessage = document.getElementById('error-message');
+        const todosBody = document.getElementById('todos-body');
+
+        // Reset error message if present
+        const existingErrorRow = document.querySelector('.error-cell');
+        if (existingErrorRow) {
+            existingErrorRow.remove();  // Remove the previous error row if any
+        }
         
-        errorMessage.textContent = '';
         if (!newTitle) {
-            errorMessage.textContent = 'The title field is required!';
-            return;  
+            // Show error message in the table if title is not provided
+            const errorRow = document.createElement('tr');
+            errorRow.classList.add('error-cell');
+            errorRow.innerHTML = `
+                <td colspan="4">The title field is required! Please enter a valid title.</td>
+            `;
+            todosBody.insertBefore(errorRow, todosBody.firstChild);
+            return;  // Stop the update if the title is empty
         }
         
         if (newTitle && newDescription) {
@@ -185,7 +201,7 @@
                     },
                     body: JSON.stringify({ title: newTitle, description: newDescription }),
                 });
-                fetchTodos();  
+                fetchTodos();  // Refresh the list of todos after updating
             } catch (error) {
                 console.error('Error updating todo:', error);
             }
@@ -198,7 +214,7 @@
             await fetch(`${backendUrl}/${id}`, {
                 method: 'DELETE',
             });
-            fetchTodos();  
+            fetchTodos();  // Refresh the list of todos after deleting
         } catch (error) {
             console.error('Error deleting todo:', error);
         }
