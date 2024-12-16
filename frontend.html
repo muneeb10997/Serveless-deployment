@@ -167,37 +167,38 @@
     }
 
     // Function to update an existing todo
-    async function updateTodo(id, currentTitle, currentDescription) {
-        const newTitle = prompt("Enter new title:", currentTitle);
-        const newDescription = prompt("Enter new description:", currentDescription);
+async function updateTodo(id, currentTitle, currentDescription) {
+    const newTitle = prompt("Enter new title:", currentTitle);
+    const newDescription = prompt("Enter new description:", currentDescription);
 
-        if (newTitle && newDescription) {
-            try {
-                await fetch(`${backendUrl}/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ title: newTitle, description: newDescription }),
-                });
-                fetchTodos();  
-            } catch (error) {
-                console.error('Error updating todo:', error);
-            }
-        }
-    }
-
-    // Function to delete a todo
-    async function deleteTodo(id) {
+    if (newTitle && newDescription) {
         try {
             await fetch(`${backendUrl}/${id}`, {
-                method: 'DELETE',
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: newTitle, description: newDescription }),
             });
             fetchTodos();  
         } catch (error) {
-            console.error('Error deleting todo:', error);
+            console.error('Error updating todo:', error);
         }
     }
+}
+
+// Function to delete a todo
+async function deleteTodo(id) {
+    try {
+        await fetch(`${backendUrl}/${id}`, {
+            method: 'DELETE',
+        });
+        fetchTodos();  
+    } catch (error) {
+        console.error('Error deleting todo:', error);
+    }
+}
+
 </script>
 
 </body>
