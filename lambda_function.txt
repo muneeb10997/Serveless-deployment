@@ -1,18 +1,13 @@
 import boto3
 import json
+import uuid
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('todos')
 
-def get_next_id():
-    response = table.scan()
-    items = response.get('Items', [])
-    
-    if not items:
-        return 1 
-
-    max_id = max(int(item['id']) for item in items) 
-    return max_id + 1
+def get_id():
+    id = uuid.uuid4()
+    return str(id)  
 
 def lambda_handler(event, context):
     http_method = event["httpMethod"]
@@ -22,59 +17,76 @@ def lambda_handler(event, context):
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS', 
         'Access-Control-Allow-Headers': 'Content-Type',  
     }
-    # fetch all items
+    
+    # Fetch all items
     if http_method == "GET" and path == '/items':
-        count=table.scan()
-        items = count.get('Items',[])
+        count = table.scan()
+        items = count.get('Items', [])
         response = {
             "statusCode": 200,
-            "headers" : headers,
+            "headers": headers,
             "body": json.dumps(items)
         }
         return response
     
-    # create new item
+    # Create new item
     elif http_method == "POST" and path == '/items':
-        item_id = get_next_id()
-        data = json.loads(event['body']) 
-        data['id'] = str(item_id)
+        item_id = get_id()  
+        data = json.loads(event['body'])  
+
+        if 'title' not in data:
+            response = {
+               "statusCode": 400, 
+               "headers": headers,
+               "body": json.dumps({"message": "'title' field is required"})
+            }
+            return response 
+
+        data['id'] = item_id
         table.put_item(Item=data)
 
         response = {
            "statusCode": 200,
-           "headers" : headers,
+           "headers": headers,
            "body": json.dumps({"message": "Item added or posted"})
         }
         return response
 
-    # delete all items
+    # Delete all items
     elif http_method == "DELETE" and path == '/items':
-        count=table.scan()
-        items = count.get('Items',[])
+        count = table.scan()
+        items = count.get('Items', [])
         for item in items:
             table.delete_item(Key={'id': item['id']})
         response = {
            "statusCode": 200,
-           "headers" : headers,
+           "headers": headers,
            "body": json.dumps({"message": "all items deleted"})
         }
         return response
     
-    # update item by id 
+    # Update item by id
     elif http_method == "PUT" and path.startswith('/items/'):
-        item_id = path.split('/')[-1]
+        item_id = path.split('/')[-1]  
         data = json.loads(event['body']) 
-        data['id'] = str(item_id)
+        if 'title' not in data:
+            response = {
+               "statusCode": 400, 
+               "headers": headers,
+               "body": json.dumps({"message": "'title' field is required"})
+            }
+            return response 
+        data['id'] = item_id 
         table.put_item(Item=data)
 
         response = {
            "statusCode": 200,
-           "headers" : headers,
-           "body": json.dumps({"message": "Item updated or posted"})
+           "headers": headers,
+           "body": json.dumps({"message": "Item updated"})
         }
         return response
         
-    # get item by id
+    # Get item by id
     elif http_method == "GET" and path.startswith('/items/'):
         item_id = path.split('/')[-1]
         data = table.get_item(Key={"id": str(item_id)})
@@ -82,25 +94,25 @@ def lambda_handler(event, context):
         if item is not None:
             response = {
                "statusCode": 200,
-               "headers" : headers,
+               "headers": headers,
                "body": json.dumps(item)
             }
             return response
         else:
             response = {
                "statusCode": 404,
-               "headers" : headers,
+               "headers": headers,
                "body": json.dumps({"message": "Item not found"})
             }
             return response
             
-    # delete item by id 
+    # Delete item by id
     elif http_method == "DELETE" and path.startswith('/items/'):
-        item_id = path.split('/')[-1]
-        table.delete_item(Key={'id':item_id})
+        item_id = path.split('/')[-1]  
+        table.delete_item(Key={'id': item_id})
         response = {
            "statusCode": 200,
-           "headers" : headers,
+           "headers": headers,
            "body": json.dumps({"message": "Item deleted"})
         }
         return response
